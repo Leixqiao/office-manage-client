@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Title</title>
+		<link href="css/layout.css" rel="stylesheet" type="text/css">
+		<link href="css/header.css" rel="stylesheet" type="text/css">
+		<link href="css/nav.css" rel="stylesheet" type="text/css">
+		<link href="css/page.css" rel="stylesheet" type="text/css">
+		<link href="css/table.css" rel="stylesheet" type="text/css">
+		<link href="css/article.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<header>
+				<div class="tit">办公用品管理系统</div>
+				<nav>
+					<ul>
+						<li><a href="article.html">物品维护</a></li>
+						<li><a href="applyManage.html" class="ac">申请审核</a></li>
+					</ul>
+				</nav>
+			</header>
+			<article>
+				<div class="top">
+					<span>申请人：</span><input placeholder="请输入申请人姓名" v-model="applyName">
+					<span style="margin-left: 40px">申请时间：</span>
+					<input type="date" v-model="applyDate" />
+					<input type="button" class="btn-search" value="查询" @click="getPage(1)" />
+					<input type="button" class="btn-search" style="background-color: orange" value="重置"
+						@click="clear" />
+				</div>
+				<div class="btns">
+					<button class="btn btn-add" @click="updateMany(1)">通过</button>
+					<button class="btn btn-delete" style="background-color: orange" @click="updateMany(-1)">驳回</button>
+				</div>
+				<div class="table-page">
+					<div>
+						<table border="0" cellspacing="1" cellpadding="4" bgcolor="#cccccc">
+							<tr style="background-color: white">
+								<th>
+									<input type="checkbox" id="checkAll" @click="checkAll">
+								</th>
+								<th>序号</th>
+								<th>物品名称</th>
+								<th>申请人</th>
+								<th>申请数量</th>
+								<th>申请时间</th>
+								<th>单位</th>
+								<th>审核</th>
+							</tr>
+							<tr v-for="(apply,index) in applyList">
+								<td>
+									<input type="checkbox" class="isChecked" :value="apply.id">
+								</td>
+								<td>{{index + 1}}</td>
+								<td>{{apply.article.articleName}}</td>
+								<td>{{apply.user.userName}}</td>
+								<td>{{apply.applyNum}}</td>
+								<td>{{apply.applyDate}}</td>
+								<td>{{apply.applyUnit}}</td>
+								<td style="width: 220px">
+									<button class="btn-update" style="margin-right: 16px;background-color: #67C23A"
+										@click="updateApplyState(apply.id,1,apply.article.id,apply.applyNum)">通过</button>
+									<button class="btn-del" style="background-color: orange"
+										@click="updateApplyState(apply.id,-1,apply.article.id,apply.applyNum)">驳回</button>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div class="page">
+						<ul>
+							<li v-for="num in pages">
+								<a v-if="num == pageNum" href="#" class="active" @click="getPage(num)">{{num}}</a>
+								<a v-else href="#" @click="getPage(num)">{{num}}</a>
+							</li>
+							<!-- <li>
+								<a href="#">2</a>
+							</li> -->
+						</ul>
+					</div>
+				</div>
+			</article>
+		</div>
+	</body>
+</html>
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	// 创建vue对象
+	var vm = new Vue({
+		el: "#app",
+		data: {
+			userId: undefined,
+			//role:undefined,
+			//表格默认数据属性
+			applyList: [{
+				"id": 1,
+				"userId": 2,
+				user: {
+					"id": 2,
+					"userName": "张三",
+				},
+				"articleId": 3,
+				article: {
+					"id": 3,
+					"articleName": "得力（deli）0468 大号省力型订书机",
+				},
+				"applyNum": 10,
+				"applyUnit": "个",
+				"applyReason": "xxxxxxx",
+				"applyDate": "2021-12-02"
+			}],
+			//分页相关属性
+			pageNum: 1,
+			pageSize: 3,
+			pages: 0,
+			//搜索选项绑定属性
+			applyName: '',
+			applyDate: undefined,
+		},
+		methods: {
+			getPage(pageNum) {
+				if (this.userId == undefined) {
+					alert("用户登录失效，请重新登录");
+					window.location.href = "login.html"
+				}else{
+					axios({
+						method: 'get',
+						url: 'http://localhost:8088/office/apply/page/' + pageNum + "/" + this.pageSize,
+						params: {
+							applyName: this.applyName,
+							applyDate: this.applyDate
+						}
+					}).then((resp) => {
+						//console.log(resp);
+						let pageInfo = resp.data.result;
+						this.applyList = pageInfo.list;
+						this.pages = pageInfo.pages;
+						this.pageNum = pageNum;
+					})
+				}
+			},
+			clear() {
+				this.applyName = '',
+					this.applyDate = undefined,
+					this.getPage(1);
+			},
+			//修改库存
+			updateStockNum(id, num) {
+				if (num > 0) {
+					axios({
+						method: 'put',
+						url: 'http://localhost:8088/office/article/updateStockNum',
+						params: {
+							flag: 1,
+							articleId: id,
+							applyNum: num,
+						}
+					}).then((resp) => {
+						console.log(resp);
+					})
+				}
+			},
+			//驳回或通过操作
+			updateApplyState(applyId, applyState, articleId, applyNum) {
+				if (applyState == -1) {
+					this.updateStockNum(articleId, applyNum)
+				}
+				axios({
+					method: "put",
+					url: 'http://localhost:8088/office/apply/' + applyId + "/" + applyState,
+				}).then((resp) => {
+					//console.log(resp);
+					if (resp.data.success) {
+						alert(resp.data.message);
+						this.getPage(this.pageNum);
+					} else {
+						alert(resp.data.message);
+					}
+				})
+			},
+			//批量审核按钮操作方法
+			updateMany(state) {
+				let ids = [];
+				var rs = window.confirm("兄弟，这是批量操作，确定吗？");
+				if (rs) {
+					//判断是否选中
+					//获取所有数据行的复选框（建议给数据行控件设置class属性，通过document.getElementsByClassName）
+					let dataCheckbox = document.getElementsByClassName("isChecked"); //返回所有数据行控件，值为数组
+					//遍历数组，判断每个元素控件的checked属性值是否为true，
+					//值为true表示选中，获取当前选中行的物品id（建议给当前控件设置需要获取的值）
+					for (var i = 0; i < dataCheckbox.length; i++) {
+						//dataCheckbox[i]//每一个数据行的复选框控件
+						if (dataCheckbox[i].checked) { //判断选中
+							ids.push(dataCheckbox[i].value); //将当前行的值存入数组
+						}
+					}
+					//判断最终ids数组的长度，确定是提示用户选中一项，还是请求后端进行批量删除
+					if (ids.length > 0) {
+						//使用axios结果请求后端批量删除
+						// console.log("批量删除操作")
+						axios({
+							method: 'put',
+							url: 'http://localhost:8088/office/apply/' + state,
+							//通过data属性发送对象数据或者数组数据值
+							data: ids //后端处理  @RequestBody List<Integer> ids
+							// data:{ids:ids}//后端处理  @RequestBody标识一个对象，对象中有属性名为ids
+						}).then((resp) => {
+							let result = resp.data;
+							if (result.success) {
+								alert(result.message);
+								//刷新当前分页切换后页面
+								this.getPage(this.pageNum);
+							} else {
+								alert(result.message);
+							}
+							//清空复选框选中效果
+							for (var i = 0; i < dataCheckbox.length; i++) {
+								dataCheckbox[i].checked = false;
+							}
+						})
+					} else {
+						alert("删除至少选中一项")
+					}
+				}
+			},
+		},
+		//在页面加载之前执行
+		created() {
+			//页面加载获取cookie中的用户id
+			console.log(Cookies.getJSON("login_user").userId)
+			this.userId = Cookies.getJSON("login_user").userId;
+			//this.userId = sessionStorage.getItem("userId");
+			//this.role = sessionStorage.getItem("role");
+			//默认加载首页
+			this.getPage(1);
+		},
+	})
+</script>

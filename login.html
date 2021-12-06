@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>登陆页面</title>
+		<link href="css/login.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<div class="tit">办公用品管理系统</div>
+			<div class="msg">{{msg}}</div>
+			<div class="content">
+				<span class="lab">用户名：</span>
+				<input placeholder="请输入用户名" v-model="username">
+
+				<span class="lab">密&nbsp;&nbsp;&nbsp;码：</span>
+				<input type="password" placeholder="请输入密码" v-model="password">
+			</div>
+			<div class="btns">
+				<button v-on:click="login">登录</button>
+				<button>重置</button>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	var vm = new Vue({
+		el: "#app",
+		data: {
+			msg: "",
+			username: "",
+			password: ""
+		},
+		methods: {
+			//处理登陆事件的方法
+			login() {
+				axios({
+					method: 'post',
+					url: 'http://localhost:8088/office/user/login',
+					data: {
+						loginName: this.username,
+						password: this.password,
+					}
+				}).then((resp) => {
+					//console.log(resp);
+					//后端返回的result对象在响应对象的data属性中
+					let result = resp.data;
+					if (result.code == 200) {
+						//将用户数据存入cookie
+						Cookies.set("login_user", {
+							userId: result.result.id,
+							userName: result.result.userName
+						})
+						//console.log(result.result.id);
+						// sessionStorage.setItem("userId",result.result.id);
+						// sessionStorage.setItem("role",result.result.role);
+						//弹窗提示
+						alert(result.message);
+						var id = result.result.id;
+						//清空提示文本属性
+						this.msg = '';
+						//判断用户权限实现跳转页面
+						if (result.result.role == 1) {
+							//跳转管理页面
+							window.location.href = "article.html";
+						} else if (result.result.role == 2) {
+							//跳转员工申请页面
+							window.location.href = "apply.html";
+						}
+					} else {
+						//给提示文本属性赋值，用于页面显示
+						this.msg = result.message;
+					}
+				})
+			}
+		}
+	})
+</script>

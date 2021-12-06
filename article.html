@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Title</title>
+		<link href="css/layout.css" rel="stylesheet" type="text/css">
+		<link href="css/header.css" rel="stylesheet" type="text/css">
+		<link href="css/nav.css" rel="stylesheet" type="text/css">
+		<link href="css/page.css" rel="stylesheet" type="text/css">
+		<link href="css/table.css" rel="stylesheet" type="text/css">
+		<link href="css/article.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<header>
+				<div class="tit">办公用品管理系统</div>
+				<nav>
+					<ul>
+						<li><a href="article.html" class="ac">物品维护</a></li>
+						<li><a href="applyManage.html">申请审核</a></li>
+					</ul>
+				</nav>
+			</header>
+			<article>
+				<div class="top">
+					<span>物品名称：</span><input placeholder="请输入物品名称" v-model="articleName">
+					<span style="margin-left: 40px">物品分类：</span>
+					<select v-model="articleType">
+						<option value="0">---请选择---</option>
+						<option v-for="type in typeList" :value="type.id">{{type.typeName}}</option>
+					</select>
+					<input type="button" class="btn-search" value="查询" @click="getpage(1)" />
+					<input type="button" class="btn-search" style="background-color: orange" value="重置"
+						@click="clear" />
+				</div>
+				<div class="btns">
+					<button class="btn btn-add" @click="openAddWindow">新增</button>
+					<button class="btn btn-delete" @click="deleteMany">删除</button>
+				</div>
+				<div class="table-page">
+					<div>
+						<table border="0" cellspacing="1" cellpadding="4" bgcolor="#cccccc">
+							<tr style="background-color: white">
+								<th>
+									<input type="checkbox">
+								</th>
+								<th>序号</th>
+								<th>物品名称</th>
+								<th>物品类别</th>
+								<th>库存数量</th>
+								<th>单位</th>
+								<th>操作</th>
+							</tr>
+							<tr v-for="(article,index) in articleList">
+								<td>
+									<input type="checkbox" class="isChecked" :value="article.id">
+								</td>
+								<td>{{index + 1}}</td>
+								<td>{{article.articleName}}</td>
+								<td>{{article.type.typeName}}</td>
+								<td>{{article.stockNum}}</td>
+								<td>{{article.stockUnit}}</td>
+								<td style="width: 220px">
+									<button class="btn-update" style="margin-right: 16px;"
+										@click="openUpdateWindow(article.id)">编辑</button>
+									<button class="btn-del" @click="deleteOne(article.id)">删除</button>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div class="page">
+						<ul>
+							<li v-for="num in pages">
+								<a v-if="num==pageNum" href="#" class="active" @click="getpage(num)">{{num}}</a>
+								<a v-else href="#" @click="getpage(num)">{{num}}</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</article>
+		</div>
+	</body>
+</html>
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	// 创建vue对象
+	var vm = new Vue({
+		el: "#app",
+		data: {
+			userId: undefined,
+			role: undefined,
+			articleList: [],
+			typeList: [],
+			pageNum: 1, //默认的当前页码
+			pageSize: 5, //默认分页大小
+			pages: 5, //存放总页数,设置默认值为5
+			articleName: '',
+			articleType: 0,
+		},
+		methods: {
+			//获取登录用户的id
+			getUrlParam(paraName) {
+				//window.location.search是获取从问号 (?) 开始的 URL（查询部分）
+				var query = window.location.search.substring(1); //?id=1,substring(1)从下标为1的位置开始向后裁剪
+				if (query.length > 1) {
+					return query.substring(paraName.length + 1); //返回字符串除了参数名和=后面的数据
+				} else {
+					return "";
+				}
+			},
+			//处理登录的事件方法
+			//获取分类集合方法
+			getTypeList() {
+				axios({
+					method: 'get',
+					url: 'http://localhost:8088/office/articleType/list',
+				}).then((resp) => {
+					console.log(resp);
+					this.typeList = resp.data.result;
+				})
+			},
+			//获取物品数据
+			getpage(pagenum) {
+				//console.log(this.articleName + "------" + this.articleType),
+				if (this.userId == undefined) {
+					alert("用户登录失效，请重新登录");
+					window.location.href = "login.html"
+				} else {
+					axios({
+						method: 'get',
+						url: 'http://localhost:8088/office/article/page',
+						params: {
+							pageNum: pagenum,
+							pageSize: this.pageSize,
+							articleName: this.articleName,
+							articleType: this.articleType,
+						}
+					}).then((resp) => {
+						console.log(resp);
+						this.articleList = resp.data.result.list;
+						//给分页总页数属性赋值
+						this.pages = resp.data.result.pages;
+						//切换当前页码，用于选中特效
+						this.pageNum = pagenum;
+					})
+				}
+			},
+			//单个删除按钮操作
+			deleteOne(articleId) {
+				var rs = window.confirm("是否确认删除？");
+				//当点击确定时，获取当前操作行物品id，编写axios结构请求后端进行删除操作
+				if (rs) {
+					axios({
+						method: 'delete',
+						url: 'http://localhost:8088/office/article/' + articleId,
+					}).then((resp) => {
+						// console.log(resp);
+						let result = resp.data;
+						if (result.success) {
+							alert(result.message);
+							//刷新当前分页切换后页面p
+							this.getpage(this.pageNum);
+						} else {
+							alert(result.message);
+						}
+					})
+				}
+			},
+			//批量删除按钮操作方法
+			deleteMany() {
+				let ids = [];
+				var rs = window.confirm("兄弟，这是批量删除，确认删除吗？");
+				//当点击确定时，获取当前操作行物品id，编写axios结构请求后端进行删除操作
+				if (rs) {
+					//判断是否选中
+					//获取所有数据行的复选框（建议给数据行控件设置class属性，通过document.getElementsByClassName）
+					let dataCheckbox = document.getElementsByClassName("isChecked"); //返回所有数据行控件，值为数组
+					//遍历数组，判断每个元素控件的checked属性值是否为true，
+					//值为true表示选中，获取当前选中行的物品id（建议给当前控件设置需要获取的值）
+					for (var i = 0; i < dataCheckbox.length; i++) {
+						//dataCheckbox[i]//每一个数据行的复选框控件
+						if (dataCheckbox[i].checked) { //判断选中
+							ids.push(dataCheckbox[i].value); //将当前行的值存入数组
+						}
+					}
+					//判断最终ids数组的长度，确定是提示用户选中一项，还是请求后端进行批量删除
+					if (ids.length > 0) {
+						//使用axios结果请求后端批量删除
+						// console.log("批量删除操作")
+						axios({
+							method: 'delete',
+							url: 'http://localhost:8088/office/article',
+							//通过data属性发送对象数据或者数组数据值
+							data: ids //后端处理  @RequestBody List<Integer> ids
+							// data:{ids:ids}//后端处理  @RequestBody标识一个对象，对象中有属性名为ids
+						}).then((resp) => {
+							let result = resp.data;
+							if (result.success) {
+								alert(result.message);
+								//刷新当前分页切换后页面
+								this.getpage(this.pageNum);
+							} else {
+								alert(result.message);
+							}
+							//情况复选框选中效果
+							for (var i = 0; i < dataCheckbox.length; i++) {
+								dataCheckbox[i].checked = false;
+							}
+						})
+					} else {
+						alert("删除至少选中一项")
+					}
+				}
+			},
+			//重置方法
+			clear() {
+				//还原用户输入数据
+				this.articleName = '';
+				this.articleType = 0;
+				//加载默认页码
+				this.getpage(1);
+			},
+			//新增按钮打开窗口处理方法
+			openAddWindow() {
+				var iWidth = 600 + 15; //弹出窗口的宽度;
+				var iHeight = 500 + 60; //弹出窗口的高度;
+				var iLeft = (window.screen.width - iWidth) / 2; //获得窗口的水平居中位置;
+				var iTop = (window.screen.height - iHeight) / 2; //获得窗口的垂直居中位置;
+				//_blank：在新窗口显示目标网页
+				var winObj = window.open('addArticle.html', '_blank', 'width=600,height=500,top=' + iTop +
+					'px,left=' + iLeft +
+					'px,toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no')
+				//循环判断窗口是否关闭
+				var vm = this; //解决关键字冲突
+				//setInterval和setTimeout
+				//每1秒（1000 毫秒）判断一次页面是否关闭 :
+				var loop = setInterval(function() {
+					if (winObj.closed) {
+						clearInterval(loop) //停止继续判断
+						// //刷新页面数据
+						vm.getpage(vm.pageNum)
+					}
+				}, 1000)
+			},
+			openUpdateWindow(id) {
+				var iWidth = 600 + 15; //弹出窗口的宽度;
+				var iHeight = 500 + 60; //弹出窗口的高度;
+				var iLeft = (window.screen.width - iWidth) / 2; //获得窗口的水平居中位置;
+				var iTop = (window.screen.height - iHeight) / 2; //获得窗口的垂直居中位置;
+				var winObj = window.open('updateArticle.html?id=' + id, '_blank', 'width=600,height=500,top=' +
+					iTop + 'px,left=' + iLeft +
+					'px,toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no')
+				//循环判断窗口是否关闭
+				var vm = this; //解决关键字冲突
+				//setInterval和setTimeout
+				var loop = setInterval(function() {
+					if (winObj.closed) {
+						clearInterval(loop) //停止继续判断
+						// //刷新页面数据
+						vm.getpage(vm.pageNum)
+					}
+				}, 1000)
+			}
+		},
+		created() {
+			//页面加载获取cookie中的用户id
+			console.log(Cookies.getJSON("login_user").userId)
+			this.userId = Cookies.getJSON("login_user").userId;
+			//调用方法获取分类集合
+			this.getTypeList();
+			//调用方法获取表格分页数据
+			this.getpage(1);
+
+			//测试通过session获取id
+			// this.userId = sessionStorage.getItem("userId");
+			// this.role = sessionStorage.getItem("role");
+			//console.log("通过session拿到的role"+this.role);
+		}
+	});
+</script>

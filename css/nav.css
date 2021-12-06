@@ -1,0 +1,25 @@
+nav ul li a{
+  text-decoration: none;
+  color: #797979;
+  width: 100px;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  display: block;
+}
+nav ul li :not(.ac):hover{
+  color: white;
+  border-bottom: 4px solid greenyellow;
+}
+.ac{
+  color: white;
+  border-bottom: 4px solid orange;
+}
+nav ul li{
+  list-style: none;
+  /*display: inline;*/
+  float: left;
+}
+nav ul{
+  padding-left: 20px;
+}

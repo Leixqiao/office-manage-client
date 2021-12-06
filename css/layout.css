@@ -1,0 +1,65 @@
+*{
+  margin: 0;
+  padding: 0;
+}
+.table-page{
+  padding-left: 20px;
+  width: 90%;
+  position: relative;
+}
+.btns{
+  padding: 8px 0 8px 20px;
+}
+.btn{
+  width: 98px;
+  height: 38px;
+  border: none;
+}
+.btn-myapply{
+  padding: 8px 0 8px 20px;
+}
+.btn:hover{
+	opacity: 0.8;
+}
+.btn-add{
+  background-color: #67C23A;
+  font-size: 16px;
+  border-radius: 4px;
+  color: ghostwhite;
+}
+.btn-update{
+	background-color: #409EFF;
+	color: ghostwhite;
+	width: 80px;
+	height: 28px;
+	border-radius: 4px;
+	font-size: 15px;
+	border: none
+}
+.btn-update:hover{
+	opacity: 0.8;
+}
+.btn-del{
+	background-color: #F56C6C;
+	color: ghostwhite;
+	width: 80px;
+	height: 28px;
+	border-radius: 4px;
+	font-size: 15px;
+	border: none
+}
+.btn-del:hover{
+	opacity: 0.8;
+}
+.btn-delete{
+  background-color: #F56C6C;
+  font-size: 16px;
+  border-radius: 4px;
+  color: ghostwhite;
+}
+.btn-login{
+  background-color: #42b983;
+}
+.btn-reset{
+  background-color: deepskyblue;
+}

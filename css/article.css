@@ -1,0 +1,28 @@
+article .top {
+    padding: 6px 0 6px 20px;
+    clear: both;
+}
+
+article .top input {
+    width: 200px;
+    height: 30px;
+}
+
+article .top select {
+    width: 200px;
+    height: 30px;
+}
+
+article .top .btn-search {
+    margin-left: 40px;
+    width: 100px;
+    height: 30px;
+	font-size: 15px;
+    border: none;
+	color: ghostwhite;
+    border-radius: 4px;
+    background-color: #5ABAAF;
+}
+article .top .btn-search:hover {
+	opacity: 0.8;
+}

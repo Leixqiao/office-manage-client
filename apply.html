@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Title</title>
+		<link href="css/layout.css" rel="stylesheet" type="text/css">
+		<link href="css/header.css" rel="stylesheet" type="text/css">
+		<link href="css/nav.css" rel="stylesheet" type="text/css">
+		<link href="css/page.css" rel="stylesheet" type="text/css">
+		<link href="css/table.css" rel="stylesheet" type="text/css">
+		<link href="css/article.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<header>
+				<div class="tit">办公用品管理系统</div>
+				<nav>
+					<ul>
+						<li><a href="apply.html" class="ac">物品申请</a></li>
+						<li><a href="myApply.html">我的申请</a></li>
+					</ul>
+				</nav>
+			</header>
+			<article>
+				<div class="top">
+					<span>物品名称：</span><input placeholder="请输入物品名称" v-model="articleName">
+					<span style="margin-left: 40px">物品类别：</span>
+					<select v-model="articleType">
+						<option value="0">---请选择---</option>
+						<option v-for="type in typeList" :value="type.id">{{type.typeName}}</option>
+					</select>
+					<input type="button" class="btn-search" value="查询" @click="getpage(1)" />
+					<input type="button" class="btn-search" style="background-color: orange" value="重置"
+						@click="clear" />
+				</div>
+				<div class="table-page">
+					<div>
+						<table border="0" cellspacing="1" cellpadding="4" bgcolor="#cccccc">
+							<tr style="background-color: white">
+								<th>
+									<input type="checkbox">
+								</th>
+								<th>序号</th>
+								<th>物品名称</th>
+								<th>物品类别</th>
+								<th>库存数量</th>
+								<th>单位</th>
+								<th>申请</th>
+							</tr>
+							<tr v-for="(article,index) in articleList">
+								<td>
+									<input type="checkbox" class="isChecked" :value="article.id">
+								</td>
+								<td>{{index + 1}}</td>
+								<td>{{article.articleName}}</td>
+								<td>{{article.type.typeName}}</td>
+								<td>{{article.stockNum}}</td>
+								<td>{{article.stockUnit}}</td>
+								<td style="width: 220px">
+									<button v-if="article.stockNum<=0" class="btn-del" style="margin-right: 16px;"
+										disabled="disabled">申请</button>
+									<button v-else class="btn-update" style="margin-right: 16px;"
+										@click="openAddApplyWindow(article.id)">申请</button>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div class="page">
+						<ul>
+							<li v-for="num in pages">
+								<a v-if="num==pageNum" href="#" class="active" @click="getpage(num)">{{num}}</a>
+								<a v-else href="#" @click="getpage(num)">{{num}}</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</article>
+		</div>
+	</body>
+</html>
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	// 创建vue对象
+	var vm = new Vue({
+		el: "#app",
+		data: {
+			userId: undefined,
+			articleList: [],
+			typeList: [],
+			pageNum: 1, //默认的当前页码
+			pageSize: 5, //默认分页大小
+			pages: 5, //存放总页数,设置默认值为5
+			articleName: '',
+			articleType: 0,
+		},
+		methods: {
+			//获取分类集合方法
+			getTypeList() {
+				axios({
+					method: 'get',
+					url: 'http://localhost:8088/office/articleType/list',
+				}).then((resp) => {
+					console.log(resp);
+					this.typeList = resp.data.result;
+				})
+			},
+			//获取物品数据
+			getpage(pagenum) {
+				//console.log(this.articleName + "------" + this.articleType),
+				if (this.userId == undefined) {
+					alert("用户登录失效，请重新登录");
+					window.location.href = "login.html";
+				} else {
+					axios({
+						method: 'get',
+						url: 'http://localhost:8088/office/article/page',
+						params: {
+							pageNum: pagenum,
+							pageSize: this.pageSize,
+							articleName: this.articleName,
+							articleType: this.articleType,
+						}
+					}).then((resp) => {
+						console.log(resp);
+						this.articleList = resp.data.result.list;
+						//给分页总页数属性赋值
+						this.pages = resp.data.result.pages;
+						//切换当前页码，用于选中特效
+						this.pageNum = pagenum;
+					})
+				}
+			},
+			//重置方法
+			clear() {
+				//还原用户输入数据
+				this.articleName = '';
+				this.articleType = 0;
+				//加载默认页码
+				this.getpage(1);
+			},
+			//申请按钮
+			openAddApplyWindow(articleId) {
+				//console.log("articleId:"+articleId);
+				var iWidth = 600 + 15; //弹出窗口的宽度;
+				var iHeight = 500 + 60; //弹出窗口的高度;
+				var iLeft = (window.screen.width - iWidth) / 2; //获得窗口的水平居中位置;
+				var iTop = (window.screen.height - iHeight) / 2; //获得窗口的垂直居中位置;
+				//从session中拿userId
+				var userId = sessionStorage.getItem("userId");
+				sessionStorage.setItem("applyUserId", userId);
+				var winObj = window.open('addApply.html?articleId=' + articleId, '_blank',
+					'width=600,height=500,top=' +
+					iTop + 'px,left=' + iLeft +
+					'px,toolbar=no,menubar=no,scrollbars=auto,resizeable=no,location=no,status=no')
+				//循环判断窗口是否关闭
+				var vm = this; //解决关键字冲突
+				//setInterval和setTimeout
+				var loop = setInterval(function() {
+					if (winObj.closed) {
+						clearInterval(loop) //停止继续判断
+						// //刷新页面数据
+						vm.getpage(vm.pageNum)
+					}
+				}, 1000)
+			}
+		},
+		created() {
+			this.userId = Cookies.getJSON("login_user").userId;
+			//this.userId = sessionStorage.getItem("userId");
+			//this.role = sessionStorage.getItem("role");
+			//调用方法获取分类集合
+			this.getTypeList();
+			//调用方法获取表格分页数据
+			this.getpage(1);
+			//测试通过session获取id
+			//console.log("id:"+sessionStorage.getItem("userId"));
+		}
+	});
+</script>

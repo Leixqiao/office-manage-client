@@ -1,0 +1,103 @@
+.lable {
+    float: left;
+}
+
+.layout {
+    background: #F2F2F2;
+    width: 600px;
+}
+
+.row {
+    height: 42px;
+    margin-top: 10px;
+    border: #cccc 1px solid;
+}
+
+.row div {
+    width: 140px;
+    font-size: 16px;
+    text-align: center;
+    line-height: 40px;
+    display: inline-block;
+    background: #FBFBFB;
+}
+
+.row input {
+    float: right;
+    height: 40px;
+    font-size: 16px;
+    border: none;
+    /*去掉表单控件激活蓝色边框*/
+    outline: none;
+}
+
+.one {
+    width: 450px;
+    /*background-color: red;*/
+}
+
+.one input {
+    width: 300px;
+    /*background-color: blue;*/
+}
+
+.two {
+    width: 450px;
+}
+
+.two input {
+    width: 300px;
+}
+
+.row select {
+    float: right;
+    height: 40px;
+    font-size: 16px;
+    border: none;
+    outline: none;
+}
+
+.one select {
+    width: 300px;
+}
+
+.three {
+    height: 200px;
+    width: 540px;
+    border: #cccc 1px solid;
+    background: #FBFBFB;
+}
+
+.three div {
+    height: 40px;
+    width: 150px;
+    font-size: 16px;
+    text-align: center;
+    line-height: 40px;
+}
+
+.three textarea {
+    width: 540px;
+    height: 150px;
+    font-size: 16px;
+    border: #cccc 1px solid;
+    /*解决控件超出问题*/
+    box-sizing: border-box;
+}
+
+button {
+    width: 100px;
+    height: 30px;
+    font-size: 16px;
+    border: none;
+    color: white;
+    margin: 20px 30px;
+}
+
+.cancel {
+    background: #4BB2FF;
+}
+
+.save {
+    background: #33AB9F;
+}

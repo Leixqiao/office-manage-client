@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Title</title>
+		<link href="css/add_article.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<div class="row one">
+				<div>物品名称 *</div>
+				<input placeholder="请输入物品名称" v-model="article.articleName" />
+			</div>
+			<div class="row two">
+				<div>物品数量 *</div>
+				<input placeholder="请输入数量" type="number" v-model="article.stockNum" />
+			</div>
+			<div class="row two">
+				<div>物品单位 *</div>
+				<input placeholder="请输入单位" v-model="article.stockUnit" />
+			</div>
+			<div class="row one">
+				<div>物品类别 *</div>
+				<select v-model="article.articleType">
+					<option value="0">---请选择---</option>
+					<option v-for="type in typeList" :value="type.id">{{type.typeName}}</option>
+				</select>
+			</div>
+			<div class="row three ">
+				<div>物品描述 *</div>
+				<textarea v-model="article.articleDescribe"></textarea>
+			</div>
+			<div style="text-align: center">
+				<button class="btn save" @click="updateArticle()">更新</button>
+				<button class="btn cancel" @click="close()">取消</button>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="js/vue.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	//创建vue对象
+	var vm = new Vue({
+		el: "#app",
+		data: {
+			typeList: [],
+			// 组件中使用的各种属性
+			article: {
+				"articleName": "",
+				"stockNum": undefined, //为了显示提示文本，所有默认值使用undefined描述数值空
+				"stockUnit": "",
+				"articleType": 0, //为了优化下拉列表的提示文本，设置默认值为0
+				"articleDescribe": ""
+			}
+		},
+		methods: {
+			//获取分类集合方法
+			getTypeList() {
+				axios({
+					method: 'get',
+					url: 'http://localhost:8088/office/articleType/list',
+				}).then((resp) => {
+					// console.log(resp);
+					this.typeList = resp.data.result;
+				})
+			},
+			//paraName 等找参数的名称
+			getUrlParam(paraName) {
+				//window.location.search是获取从问号 (?) 开始的 URL（查询部分）
+				var query = window.location.search.substring(1); //?id=1,substring(1)从下标为1的位置开始向后裁剪
+				if (query.length > 1) {
+					return query.substring(paraName.length + 1); //返回字符串除了参数名和=后面的数据
+				} else {
+					return "";
+				}
+			},
+			//通过id获取物品对象
+			getArticle(articleId) {
+				if (articleId.trim().length > 0) {
+					axios({
+						url: "http://localhost:8088/office/article/" + articleId,
+						method: "get"
+					}).then((resp) => {
+						//将响应对象赋值覆盖初始数据,用于回显
+						let result = resp.data;
+						if (result.success) {
+							//将数据赋值页面绑定对象回显
+							//console.log(result.result)
+							this.article = result.result;
+						} else {
+							alert(result.message);
+						}
+					});
+				}
+			},
+			//更新物品方法
+			updateArticle() {
+				axios({
+					method: 'put',
+					url: 'http://localhost:8088/office/article',
+					//如果页面绑定对象属性名和后端实体完全一致，建议以下方式
+					data: this.article,
+				}).then((resp) => {
+					// console.log(resp);
+					let result = resp.data;
+					if (result.success) {
+						alert(result.message);
+						window.close();
+					} else {
+						alert(result.message);
+					}
+				})
+
+			},
+			//取消按钮
+			close() {
+				window.close();
+			},
+		},
+		created() {
+			//加载分类列表
+			this.getTypeList();
+			//获取地址中的参数
+			var articleId = this.getUrlParam("id");
+			//通过参数id获取物品对象，赋值给当前vue中article属性用于页面回显
+			this.getArticle(articleId);
+		}
+	})
+</script>

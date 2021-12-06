@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Expires" content="0">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Cache-control" content="no-cache">
+		<meta http-equiv="Cache" content="no-cache">
+		<title>Title</title>
+		<link href="css/add_article.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<div class="row one">
+				<div>物品名称 *</div>
+				<input placeholder="请输入物品名称" v-model="article.articleName"/>
+			</div>
+			<div class="row two">
+				<div>物品数量 *</div>
+				<input placeholder="请输入数量" v-model="article.stockNum"/>
+			</div>
+			<div class="row two">
+				<div>物品单位 *</div>
+				<input placeholder="请输入单位" v-model="article.stockUnit"/>
+			</div>
+			<div class="row one">
+				<div>物品类别 *</div>
+				<select v-model="article.articleType">
+					<option value="0">---请选择---</option>
+					<option v-for="type in typeList" :value="type.id">{{type.typeName}}</option>
+				</select>
+			</div>
+			<div class="row three ">
+				<div>物品描述 *</div>
+				<textarea v-model="article.articleDescribe"></textarea>
+			</div>
+			<div style="text-align: center">
+				<button class="save" @click="addArticle">新增</button>
+				<button class="cancel" @click="close">取消</button>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	new Vue({
+		el: "#app",
+		data: {
+			typeList: [],
+			// 组件中使用的各种属性
+			article: {
+				"articleName": "",
+				"stockNum": undefined, //为了显示提示文本，所有默认值使用undefined描述数值空
+				"stockUnit": "",
+				"articleType": 0, //为了优化下拉列表的提示文本，设置默认值为0
+				"articleDescribe": ""
+			}
+		},
+		methods: {
+			//获取分类集合方法
+			getTypeList() {
+				axios({
+					method: 'get',
+					url: 'http://localhost:8088/office/articleType/list',
+				}).then((resp) => {
+					// console.log(resp);
+					this.typeList = resp.data.result;
+				})
+			},
+			//新增按钮事件
+			addArticle() {
+				axios({
+					url: "http://localhost:8088/office/article",
+					method: "post",
+					data: this.article //将对象作为参数发送后端
+				}).then((resp) => {
+					console.log(resp);
+					//将响应数据集合赋值
+					var msg = resp.data;
+					if (msg.success) {
+						alert(msg.message);
+						window.close();
+					} else {
+						alert(msg.message);
+					}
+				});
+			},
+			close() {
+				window.close(); //关闭本窗口
+			}
+		},
+		created() {
+			this.getTypeList();
+		}
+	});
+</script>

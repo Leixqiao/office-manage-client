@@ -1,0 +1,9 @@
+table td,th{
+  padding: 4px 4px 4px 4px;
+  background-color: white;
+}
+table{
+  text-align: center;
+  margin-top: 6px;
+  width: 100%;
+}

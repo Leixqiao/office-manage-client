@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Title</title>
+		<link href="css/add_article.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="app" class="layout">
+			<div class="row one">
+				<div>物品名称</div>
+				<input v-model="article.articleName" readonly="readonly" />
+			</div>
+
+			<div class="row one">
+				<div>物品类别</div>
+				<input v-model="article.type.typeName" readonly="readonly" />
+			</div>
+
+			<div class="row one">
+				<div>申请日期</div>
+				<input v-model="applyDate" readonly="readonly" />
+			</div>
+
+			<div class="row one">
+				<div>申请人</div>
+				<input v-model="applyUser" readonly="readonly" />
+			</div>
+
+			<div class="row two">
+				<div>申请数量 *</div>
+				<input placeholder="请输入数量" type="number" v-model="applyNum" />
+			</div>
+
+			<div class="row two">
+				<div>单位</div>
+				<input v-model="article.stockUnit" readonly="readonly" />
+			</div>
+
+			<div class="row three ">
+				<div>原因说明 *</div>
+				<textarea v-model="applyReason"></textarea>
+			</div>
+			<div style="text-align: center">
+				<button class="btn save" @click="addApply()">提交</button>
+				<button class="btn cancel" @click="close()">取消</button>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="js/vue.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/moment.min.js"></script>
+<script src="js/js.cookie.min.js"></script>
+<script>
+	//创建vue对象
+	var vm = new Vue({
+		el: "#app",
+		data: {
+			"userId": undefined,
+			"articleId": 0,
+			"applyNum": 1,
+			"applyReason": null,
+			"applyDate": moment(new Date()).format("YYYY-MM-DD"),
+			"applyUser": 'xxxx',
+			article: {
+				"id": 1,
+				"articleName": "demoData",
+				"stockNum": 1,
+				"stockUnit": "demoData",
+				"articleType": 1,
+				"articleDescribe": "demoData",
+				type: {
+					"id": 1,
+					"typeName": "demoData"
+				}
+			}
+		},
+		methods: {
+			//通过id获取物品对象
+			getArticle(articleId) {
+				if (articleId.trim().length > 0) {
+					axios({
+						url: "http://localhost:8088/office/article/getArticle/" + articleId,
+						method: "get"
+					}).then((resp) => {
+						//将响应对象赋值覆盖初始数据,用于回显
+						console.log(resp);
+						let response = resp.data;
+						if (response.success) {
+							//将数据赋值页面绑定对象回显
+							//console.log(result.result)
+							this.article = response.result;
+						} else {
+							alert(response.message);
+						}
+					});
+				}
+			},
+			//根据id查user
+			// getUser(userId) {
+			// 	if (userId != 0) {
+			// 		axios({
+			// 			url: "http://localhost:8088/office/user/" + userId,
+			// 			method: "get"
+			// 		}).then((resp) => {
+			// 			//console.log(resp);
+			// 			//将响应对象赋值覆盖初始数据,用于回显
+			// 			let resonse = resp.data;
+			// 			if (resonse.success) {
+			// 				//将数据赋值页面绑定对象回显
+			// 				//console.log(result.result)
+			// 				this.applyUser = resonse.result.userName;
+			// 			} else {
+			// 				alert(resonse.message);
+			// 			}
+			// 		});
+			// 	}
+			// },
+			//添加申请的方法
+			addApply() {
+				if (this.applyNum <= this.article.stockNum && this.applyReason != null) {
+					axios({
+						method: 'post',
+						url: 'http://localhost:8088/office/apply',
+						//如果页面绑定对象属性名和后端实体完全一致，建议以下方式
+						data: {
+							"userId": this.userId,
+							"articleId": this.articleId,
+							"applyNum": this.applyNum,
+							"applyUnit": this.article.stockUnit,
+							"applyReason": this.applyReason,
+							"applyDate": this.applyDate,
+							"applyState": 0,
+						}
+					}).then((resp) => {
+						// console.log(resp);
+						let result = resp.data;
+						if (result.success) {
+							this.updateStockNum(this.articleId, this.applyNum);
+							alert(result.message);
+							window.close();
+						} else {
+							alert(result.message);
+							window.close();
+						}
+					})
+				} else {
+					alert("申请条件不合法，请检查申请数量和申请原因！")
+				}
+			},
+			//修改库存
+			updateStockNum(id, num) {
+				if (num > 0) {
+					axios({
+						method: 'put',
+						url: 'http://localhost:8088/office/article/updateStockNum',
+						params: {
+							flag: -1,
+							articleId: id,
+							applyNum: num,
+						}
+					}).then((resp) => {
+						console.log(resp);
+					})
+				}
+			},
+			getUrlParam(paraName) {
+				//window.location.search是获取从问号 (?) 开始的 URL（查询部分）
+				var query = window.location.search.substring(1); //?id=1,substring(1)从下标为1的位置开始向后裁剪
+				if (query.length > 1) {
+					return query.substring(paraName.length + 1); //返回字符串除了参数名和=后面的数据
+				} else {
+					return "";
+				}
+			},
+			//取消按钮
+			close() {
+				//console.log(this.articleId + "-----" + this.userId + "+++++" + this.applyDate);
+				//console.log(this.getUrlParam(articleId) + "----" + sessionStorage.getItem("applyUserId"));
+				window.close();
+			}
+		},
+		created() {
+			this.articleId = this.getUrlParam("articleId");
+			this.userId = Cookies.getJSON("login_user").userId;
+			this.applyUser = Cookies.getJSON("login_user").userName;
+			//this.userId = sessionStorage.getItem("applyUserId");
+			//通过参数id获取物品对象，赋值给当前vue中article属性用于页面回显
+			this.getArticle(this.articleId);
+			//this.getUser(this.userId);
+		}
+	})
+</script>
